@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -11,6 +12,21 @@ func home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
+	}
+	files := []string{
+		"./ui/html/base.tmpl",
+		"./ui/html/home.tmpl",
+	}
+
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+	err = ts.ExecuteTemplate(w, "base", nil)
+
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
 	w.Write([]byte("Hello from snippetbox"))
 }
@@ -35,20 +51,4 @@ func snippetCreate(w http.ResponseWriter, r *http.Request) {
 
 func snippetRoot(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("This is the root of the snippet"))
-}
-
-func main() {
-	fmt.Println("Hello World!")
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", home)
-	mux.HandleFunc("/snippet", snippetRoot)
-	mux.HandleFunc("/snippet/view", snippetView)
-	mux.HandleFunc("/snippet/create", snippetCreate)
-
-	log.Print("starting server on 4000 port")
-
-	err := http.ListenAndServe(":4000", mux)
-	if err != nil {
-		log.Fatal(err)
-	}
 }
